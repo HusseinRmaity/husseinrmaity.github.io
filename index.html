@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Log — n8n practice, 18 months</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F1E8;
+    --surface: #FFFFFF;
+    --surface-2: #EDE7D9;
+    --ink-1: #1A1815;
+    --ink-2: #57534E;
+    --ink-3: #9C948A;
+    --accent: #2B3A67;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #DEE4F0;
+    --success: #3F6B4E;
+    --success-soft: #E1EBE3;
+    --warning: #A66534;
+    --warning-soft: #F0E3D3;
+    --rule: #DDD5C4;
+    --rule-strong: #C4BBA8;
+
+    --serif: 'IBM Plex Serif', Georgia, serif;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink-1);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+  input, textarea { font-family: inherit; font-size: inherit; }
+
+  /* Layout ------------------------------------------------------------ */
+
+  .shell {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 32px 40px 80px;
+  }
+
+  @media (max-width: 720px) {
+    .shell { padding: 20px 16px 60px; }
+  }
+
+  /* Masthead ---------------------------------------------------------- */
+
+  .masthead {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--rule-strong);
+    margin-bottom: 32px;
+    gap: 24px;
+  }
+
+  .masthead-title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 30px;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink-1);
+  }
+
+  .masthead-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-2);
+    margin-top: 6px;
+  }
+
+  .masthead-meta {
+    display: flex;
+    gap: 20px;
+    align-items: end;
+    text-align: right;
+  }
+
+  .meta-block { text-align: right; }
+  .meta-label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 4px;
+    display: block;
+  }
+  .meta-value {
+    font-family: var(--mono);
+    font-size: 18px;
+    color: var(--ink-1);
+    font-weight: 500;
+  }
+  .meta-value.accent { color: var(--accent); }
+
+  @media (max-width: 720px) {
+    .masthead { grid-template-columns: 1fr; gap: 16px; }
+    .masthead-meta { justify-content: flex-start; text-align: left; }
+    .meta-block { text-align: left; }
+    .masthead-title { font-size: 24px; }
+  }
+
+  /* Workspace grid ---------------------------------------------------- */
+
+  .workspace {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .workspace { grid-template-columns: 1fr; }
+  }
+
+  /* Journey stratigraphy --------------------------------------------- */
+
+  .journey {
+    position: sticky;
+    top: 20px;
+  }
+
+  .journey-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .journey-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+
+  .journey-progress {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+
+  .strata {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stratum {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    align-items: stretch;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    position: relative;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+  }
+
+  .stratum:hover {
+    background: rgba(43, 58, 103, 0.04);
+  }
+
+  .stratum::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: transparent;
+    transition: background 0.2s ease;
+  }
+
+  .stratum.current::before { background: var(--accent); }
+
+  .stratum-index {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    padding-top: 2px;
+    letter-spacing: 0.08em;
+  }
+
+  .stratum.current .stratum-index { color: var(--accent); }
+  .stratum.complete .stratum-index { color: var(--success); }
+
+  .stratum-body { min-width: 0; }
+
+  .stratum-name {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink-1);
+    line-height: 1.2;
+    margin-bottom: 3px;
+  }
+
+  .stratum.upcoming .stratum-name { color: var(--ink-3); }
+
+  .stratum-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .stratum-duration {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-2);
+    letter-spacing: 0.02em;
+  }
+
+  .stratum-count {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stratum.complete .stratum-count { color: var(--success); }
+
+  .stratum-fill {
+    height: 2px;
+    background: var(--rule);
+    margin-top: 8px;
+    overflow: hidden;
+    border-radius: 1px;
+  }
+
+  .stratum-fill-bar {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.4s ease;
+  }
+
+  .stratum.complete .stratum-fill-bar { background: var(--success); }
+  .stratum.upcoming .stratum-fill-bar { background: var(--ink-3); }
+
+  /* Journey mobile toggle */
+  @media (max-width: 900px) {
+    .journey { position: static; margin-bottom: 8px; }
+  }
+
+  /* Content sections -------------------------------------------------- */
+
+  .content { display: flex; flex-direction: column; gap: 40px; min-width: 0; }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+    gap: 16px;
+  }
+
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 6px;
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink-1);
+    line-height: 1.15;
+  }
+
+  .section-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-2);
+    text-align: right;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Phase panel ------------------------------------------------------- */
+
+  .phase-summary {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-style: italic;
+    color: var(--ink-2);
+    margin-bottom: 24px;
+    line-height: 1.5;
+    max-width: 640px;
+  }
+
+  .task-list { display: flex; flex-direction: column; }
+
+  .task {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    align-items: start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule);
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+  }
+
+  .task:hover { background: rgba(0,0,0,0.015); }
+
+  .task-check {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--rule-strong);
+    border-radius: 3px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+
+  .task.done .task-check {
+    background: var(--success);
+    border-color: var(--success);
+  }
+
+  .task-check svg { opacity: 0; }
+  .task.done .task-check svg { opacity: 1; }
+
+  .task-text {
+    font-size: 14.5px;
+    color: var(--ink-1);
+    line-height: 1.5;
+    padding-right: 8px;
+  }
+
+  .task.done .task-text {
+    color: var(--ink-3);
+    text-decoration: line-through;
+    text-decoration-color: var(--ink-3);
+  }
+
+  .task-tag {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 3px 6px;
+    background: var(--surface-2);
+    border-radius: 2px;
+    align-self: center;
+    white-space: nowrap;
+  }
+
+  /* Gate panel -------------------------------------------------------- */
+
+  .gate {
+    margin-top: 32px;
+    padding: 20px 22px;
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .gate.passed { border-left-color: var(--success); background: var(--success-soft); }
+
+  .gate-label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .gate.passed .gate-label { color: var(--success); }
+
+  .gate-title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 17px;
+    color: var(--ink-1);
+    margin-bottom: 12px;
+  }
+
+  .gate-criteria { display: flex; flex-direction: column; gap: 8px; }
+
+  .gate-item {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--ink-1);
+  }
+
+  .gate-item-marker {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    flex-shrink: 0;
+    min-width: 20px;
+  }
+
+  .gate-item.hit .gate-item-marker { color: var(--success); }
+
+  /* Metrics grid ------------------------------------------------------ */
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+
+  .metric {
+    background: var(--surface);
+    padding: 16px 18px;
+  }
+
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+  }
+
+  .metric-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--ink-1);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metric-value.accent { color: var(--accent); }
+  .metric-value.success { color: var(--success); }
+
+  .metric-unit {
+    font-family: var(--sans);
+    font-size: 11px;
+    color: var(--ink-3);
+    font-weight: 400;
+    margin-left: 3px;
+  }
+
+  /* Log panel --------------------------------------------------------- */
+
+  .log-form {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 20px 22px;
+    margin-bottom: 24px;
+  }
+
+  .log-form-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    color: var(--ink-1);
+    font-size: 14px;
+  }
+
+  .log-form-toggle-label {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 15px;
+  }
+
+  .log-form-toggle-icon {
+    font-family: var(--mono);
+    color: var(--ink-3);
+    font-size: 16px;
+    transition: transform 0.2s ease;
+  }
+
+  .log-form.open .log-form-toggle-icon { transform: rotate(45deg); }
+
+  .log-form-body { display: none; margin-top: 18px; }
+  .log-form.open .log-form-body { display: block; }
+
+  .log-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .field-group { display: flex; flex-direction: column; }
+
+  .field-label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 5px;
+  }
+
+  .field-input {
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    padding: 8px 10px;
+    color: var(--ink-1);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+    border-radius: 2px;
+  }
+
+  .field-input:focus { border-color: var(--accent); }
+
+  textarea.field-input {
+    font-family: var(--sans);
+    font-size: 13px;
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  .log-form-body .field-group.full-width { grid-column: 1 / -1; }
+
+  .log-form-body .field-group.full-width textarea { min-height: 72px; }
+
+  .log-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 2px;
+    transition: all 0.15s;
+    border: 1px solid var(--rule-strong);
+    background: var(--surface);
+    color: var(--ink-1);
+  }
+  .btn:hover { border-color: var(--ink-2); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: #1e2a4d; border-color: #1e2a4d; }
+
+  .btn-danger { color: var(--warning); border-color: transparent; padding: 4px 8px; font-size: 10px; }
+  .btn-danger:hover { color: #7a4020; }
+
+  /* Log list ---------------------------------------------------------- */
+
+  .log-entries { display: flex; flex-direction: column; }
+
+  .log-entry {
+    display: grid;
+    grid-template-columns: 100px 1fr auto;
+    gap: 20px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+
+  .log-week {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-2);
+    padding-top: 2px;
+    line-height: 1.5;
+  }
+
+  .log-week-strong {
+    color: var(--ink-1);
+    display: block;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  .log-numbers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 22px;
+    font-size: 13px;
+    align-items: baseline;
+  }
+
+  .log-num-item { display: flex; align-items: baseline; gap: 4px; }
+  .log-num-label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .log-num-value {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--ink-1);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .log-note {
+    grid-column: 2;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13.5px;
+    color: var(--ink-2);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .empty-state {
+    padding: 32px 20px;
+    text-align: center;
+    color: var(--ink-3);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 14px;
+    border: 1px dashed var(--rule-strong);
+    border-radius: 3px;
+  }
+
+  /* Notes panel ------------------------------------------------------- */
+
+  .notes-textarea {
+    width: 100%;
+    min-height: 160px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 16px 18px;
+    color: var(--ink-1);
+    font-family: var(--serif);
+    font-size: 15px;
+    line-height: 1.6;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s;
+    border-radius: 2px;
+  }
+  .notes-textarea:focus { border-color: var(--accent); }
+
+  .save-indicator {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .save-indicator.saving { color: var(--accent); }
+
+  /* Positioning card -------------------------------------------------- */
+
+  .positioning {
+    background: var(--surface-2);
+    padding: 20px 24px;
+    border-radius: 3px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .positioning-field { display: flex; flex-direction: column; }
+
+  .positioning-field label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 6px;
+  }
+
+  .positioning-field input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--rule-strong);
+    padding: 4px 0 8px;
+    color: var(--ink-1);
+    font-family: var(--serif);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .positioning-field input:focus { border-bottom-color: var(--accent); }
+  .positioning-field input::placeholder {
+    color: var(--ink-3);
+    font-style: italic;
+  }
+
+  /* Endgame panel ----------------------------------------------------- */
+
+  .endgame {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .endgame-card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 18px 20px;
+    border-radius: 3px;
+  }
+
+  .endgame-name {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .endgame-ceiling {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .endgame-desc {
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+
+  /* Footer note ------------------------------------------------------- */
+
+  .footer-note {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.5;
+    max-width: 640px;
+  }
+
+  /* Reset link ------------------------------------------------------- */
+
+  .reset-link {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    margin-top: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .reset-link:hover { color: var(--warning); }
+
+  /* Loading state ----------------------------------------------------- */
+
+  .loading {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--ink-3);
+    font-family: var(--serif);
+    font-style: italic;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="shell" id="app">
+  <div class="loading">Loading field log…</div>
+</div>
+
+<script>
+// ============================================================================
+// DATA — phases, tasks, gates
+// ============================================================================
+
+const PHASES = [
+  {
+    id: 0,
+    name: "Foundation",
+    duration: "Weeks 1–2",
+    summary: "Payment infrastructure, positioning, and profiles. This is where most Lebanese freelancers quietly fail before they start. Do the work here so nothing above collapses.",
+    tasks: [
+      { id: "0-0", text: "Create Sinbad account and complete KYC verification", tag: "payments" },
+      { id: "0-1", text: "Create Purpl account as backup payment rail", tag: "payments" },
+      { id: "0-2", text: "Have someone abroad send you $10 through Sinbad, confirm cash-out works", tag: "payments" },
+      { id: "0-3", text: "Set up Upwork freelancer profile with n8n, AI agents, Claude, Supabase tagged as skills", tag: "profile" },
+      { id: "0-4", text: "Rewrite LinkedIn headline and about section around your positioning statement", tag: "profile" },
+      { id: "0-5", text: "Create Mostaql profile in Arabic", tag: "profile" },
+      { id: "0-6", text: "Create Ureed profile targeting Gulf market", tag: "profile" },
+      { id: "0-7", text: "Buy personal domain (yourname.dev or similar)", tag: "setup" },
+      { id: "0-8", text: "Set up a Freelance folder in Google Drive with contract, invoice, and proposal templates", tag: "setup" },
+      { id: "0-9", text: "Set up a client tracker in Notion or Obsidian", tag: "setup" },
+      { id: "0-10", text: "Draft a one-page contract template covering scope, payment, revisions, and IP", tag: "setup" },
+      { id: "0-11", text: "Lock your positioning statement in the box above — do not touch it for 30 days", tag: "positioning" }
+    ],
+    gate: {
+      title: "Foundation gate",
+      criteria: [
+        "$10 test transfer verified end-to-end",
+        "All four platform profiles complete",
+        "Positioning statement locked and memorized"
+      ]
+    }
+  },
+  {
+    id: 1,
+    name: "Launch",
+    duration: "Weeks 3–6",
+    summary: "Portfolio in public, outreach at scale. Three real case studies with Loom videos are your proof asset library. Then 15 touches a day, five days a week, without exception.",
+    tasks: [
+      { id: "1-0", text: "Build Case Study 1: Zapier-to-n8n migration (real workflow, real numbers)", tag: "portfolio" },
+      { id: "1-1", text: "Record a 3-minute Loom walkthrough of Case Study 1", tag: "portfolio" },
+      { id: "1-2", text: "Build Case Study 2: WhatsApp Business API booking bot with AI classifier", tag: "portfolio" },
+      { id: "1-3", text: "Record a Loom walkthrough of Case Study 2", tag: "portfolio" },
+      { id: "1-4", text: "Build Case Study 3: Marketing agency reporting automation with PDF output", tag: "portfolio" },
+      { id: "1-5", text: "Record a Loom walkthrough of Case Study 3", tag: "portfolio" },
+      { id: "1-6", text: "Publish portfolio page on personal domain with all three case studies", tag: "publish" },
+      { id: "1-7", text: "Upload workflow JSONs to public GitHub repos with README explanations", tag: "publish" },
+      { id: "1-8", text: "Publish 3 LinkedIn posts, one per case study, spaced across 2 weeks", tag: "publish" },
+      { id: "1-9", text: "Reach 100 personalized Upwork proposals sent (cumulative)", tag: "outreach" },
+      { id: "1-10", text: "Reach 50 targeted LinkedIn DMs sent (cumulative)", tag: "outreach" },
+      { id: "1-11", text: "Have 5 real client conversations active (calls, DM threads, quotes)", tag: "outreach" }
+    ],
+    gate: {
+      title: "Launch gate",
+      criteria: [
+        "3 case studies live and public with videos",
+        "100+ proposals and 50+ DMs sent",
+        "5+ active conversations underway"
+      ]
+    }
+  },
+  {
+    id: 2,
+    name: "Ignition",
+    duration: "Months 2–3",
+    summary: "The first three completed projects with five-star reviews. This is where the flywheel starts. Rate matters less than delivery quality and speed of turnaround.",
+    tasks: [
+      { id: "2-0", text: "Land first paid project (accept anything above $100 minimum floor)", tag: "revenue" },
+      { id: "2-1", text: "Complete first project ahead of deadline with Loom walkthrough delivered", tag: "delivery" },
+      { id: "2-2", text: "Receive first 5-star public review", tag: "proof" },
+      { id: "2-3", text: "Land second project at +30% from the first", tag: "revenue" },
+      { id: "2-4", text: "Land third project at +30% again", tag: "revenue" },
+      { id: "2-5", text: "Turn two completed projects into public case studies on portfolio", tag: "proof" },
+      { id: "2-6", text: "Cross $1,000 in cumulative revenue", tag: "revenue" },
+      { id: "2-7", text: "Get one follow-up conversation or repeat inquiry from a past client", tag: "retention" }
+    ],
+    gate: {
+      title: "Ignition gate",
+      criteria: [
+        "3+ completed projects with 5-star reviews",
+        "$1,000+ cumulative revenue",
+        "2 real client case studies in portfolio"
+      ]
+    }
+  },
+  {
+    id: 3,
+    name: "Momentum",
+    duration: "Months 4–6",
+    summary: "Shift from one-off projects to recurring revenue. Every completed project ends with the retainer conversation. Productization begins. Direct clients start replacing platforms.",
+    tasks: [
+      { id: "3-0", text: "Have the retainer conversation with every completed project client", tag: "sales" },
+      { id: "3-1", text: "Sign first monthly retainer at $500+/month", tag: "recurring" },
+      { id: "3-2", text: "Cross 8 total completed projects (cumulative)", tag: "throughput" },
+      { id: "3-3", text: "Hit $2,500 in a single calendar month", tag: "revenue" },
+      { id: "3-4", text: "Package your best workflow as a productized offer (fixed scope, fixed price)", tag: "productize" },
+      { id: "3-5", text: "List first n8n template on Gumroad ($29–$99)", tag: "productize" },
+      { id: "3-6", text: "Make 2+ template sales", tag: "productize" },
+      { id: "3-7", text: "Land 1 direct client (not from platform bid) via LinkedIn or referral", tag: "direct" }
+    ],
+    gate: {
+      title: "Momentum gate",
+      criteria: [
+        "1+ monthly retainer signed",
+        "$2,500+ hit in a single month",
+        "At least 1 direct client acquired"
+      ]
+    }
+  },
+  {
+    id: 4,
+    name: "Systematize",
+    duration: "Months 7–12",
+    summary: "You are running a small business now. Client mix shifts to majority direct and retainer. Content becomes marketing. Rate discipline is the biggest lever.",
+    tasks: [
+      { id: "4-0", text: "Hit $5,000+ average monthly revenue over a 3-month window", tag: "revenue" },
+      { id: "4-1", text: "Sign 3+ active monthly retainers", tag: "recurring" },
+      { id: "4-2", text: "Reach 5+ direct (non-platform) clients", tag: "direct" },
+      { id: "4-3", text: "Publish 20+ case studies, posts, or breakdowns cumulatively", tag: "content" },
+      { id: "4-4", text: "Ship a second productized offer with fixed scope and pricing", tag: "productize" },
+      { id: "4-5", text: "Template store generates $200+/month passively", tag: "productize" },
+      { id: "4-6", text: "Achieve client mix of ~40% direct / 40% retainer / 20% platform", tag: "mix" },
+      { id: "4-7", text: "Sustain LinkedIn content cadence of 3x/week for one full quarter", tag: "content" }
+    ],
+    gate: {
+      title: "Systematize gate",
+      criteria: [
+        "$5,000+ monthly average sustained",
+        "3+ retainers active simultaneously",
+        "Direct-client mix at 40% or higher"
+      ]
+    }
+  },
+  {
+    id: 5,
+    name: "Compound",
+    duration: "Year 2+",
+    summary: "Decision time. Three paths open: solo premium consultant, agency, or product. Most people pick a hybrid. The prior 12 months put all three within reach — pick with intention.",
+    tasks: [
+      { id: "5-0", text: "Choose your endgame path deliberately (see options below)", tag: "decision" },
+      { id: "5-1", text: "Define your 12-month milestone for that specific path", tag: "planning" },
+      { id: "5-2", text: "Decide who you stop serving (raising bar or dropping smallest clients)", tag: "focus" },
+      { id: "5-3", text: "Build the first hire, product, or premium offer that path requires", tag: "build" }
+    ],
+    gate: {
+      title: "Choose your compound",
+      criteria: [
+        "Path chosen with clear reasoning",
+        "First path-specific milestone defined",
+        "Execution begun"
+      ]
+    }
+  }
+];
+
+const ENDGAMES = [
+  {
+    name: "Solo premium",
+    ceiling: "$15K–20K / month",
+    desc: "6–8 retainer clients at $2K–3K each. Total control, no employees, high margin. Time-bound ceiling."
+  },
+  {
+    name: "Agency",
+    ceiling: "$30K–100K+ / month",
+    desc: "Hire 2–3 juniors, focus on sales and delivery oversight. Scales beyond your time. Management overhead."
+  },
+  {
+    name: "Product",
+    ceiling: "Unbounded",
+    desc: "Turn an automation into a SaaS. Freelancing funds the build. Multi-year commitment. Sellable asset."
+  }
+];
+
+// ============================================================================
+// STATE
+// ============================================================================
+
+const STORAGE_KEY = "freelance_journey_v1";
+
+const DEFAULT_STATE = {
+  version: 1,
+  startDate: null,
+  currentPhase: 0,
+  tasks: {},
+  logs: [],
+  notes: "",
+  positioning: { who: "", what: "", outcome: "" }
+};
+
+let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+let saveTimeout = null;
+
+async function loadState() {
+  try {
+    const result = await window.storage.get(STORAGE_KEY);
+    if (result && result.value) {
+      const loaded = JSON.parse(result.value);
+      Object.assign(state, loaded);
+    }
+  } catch (e) {
+    // First run, storage doesn't have it yet — that's fine
+  }
+  if (!state.startDate) {
+    state.startDate = new Date().toISOString().split("T")[0];
+    await persist();
+  }
+}
+
+async function persist() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(state));
+    setSaveIndicator("saved");
+  } catch (e) {
+    setSaveIndicator("error");
+    console.error("Save failed:", e);
+  }
+}
+
+function save() {
+  setSaveIndicator("saving");
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(persist, 400);
+}
+
+function setSaveIndicator(state_str) {
+  const el = document.getElementById("save-indicator");
+  if (!el) return;
+  if (state_str === "saving") {
+    el.textContent = "Saving…";
+    el.classList.add("saving");
+  } else if (state_str === "saved") {
+    el.textContent = "Saved";
+    el.classList.remove("saving");
+  } else {
+    el.textContent = "Save error";
+    el.classList.remove("saving");
+  }
+}
+
+// ============================================================================
+// DERIVED VALUES
+// ============================================================================
+
+function daysSinceStart() {
+  if (!state.startDate) return 0;
+  const start = new Date(state.startDate);
+  const now = new Date();
+  return Math.floor((now - start) / (1000 * 60 * 60 * 24));
+}
+
+function phaseProgress(phaseIndex) {
+  const phase = PHASES[phaseIndex];
+  const done = phase.tasks.filter(t => state.tasks[t.id]).length;
+  return { done, total: phase.tasks.length, percent: phase.tasks.length ? Math.round(done / phase.tasks.length * 100) : 0 };
+}
+
+function phaseComplete(phaseIndex) {
+  const p = phaseProgress(phaseIndex);
+  return p.total > 0 && p.done === p.total;
+}
+
+function totalTasksDone() {
+  return PHASES.reduce((sum, p) => sum + p.tasks.filter(t => state.tasks[t.id]).length, 0);
+}
+
+function totalTasks() {
+  return PHASES.reduce((sum, p) => sum + p.tasks.length, 0);
+}
+
+function metrics() {
+  const logs = state.logs || [];
+  const totalRevenue = logs.reduce((s, l) => s + (Number(l.revenue) || 0), 0);
+  const totalProposals = logs.reduce((s, l) => s + (Number(l.proposals) || 0), 0);
+  const totalDms = logs.reduce((s, l) => s + (Number(l.dms) || 0), 0);
+  const totalProjects = logs.reduce((s, l) => s + (Number(l.projects) || 0), 0);
+  const totalReviews = logs.reduce((s, l) => s + (Number(l.reviews) || 0), 0);
+  const activeRetainers = logs.length > 0 ? (Number(logs[0].retainers) || 0) : 0;
+
+  // last 4 weeks
+  const recent = logs.slice(0, 4);
+  const recentRevenue = recent.reduce((s, l) => s + (Number(l.revenue) || 0), 0);
+  const recentProposals = recent.reduce((s, l) => s + (Number(l.proposals) || 0), 0);
+
+  return {
+    totalRevenue, totalProposals, totalDms, totalProjects, totalReviews, activeRetainers,
+    recentRevenue, recentProposals,
+    logCount: logs.length
+  };
+}
+
+function formatCurrency(n) {
+  if (!n && n !== 0) return "$0";
+  return "$" + Math.round(n).toLocaleString();
+}
+
+function formatDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+// ============================================================================
+// RENDERING
+// ============================================================================
+
+function render() {
+  const app = document.getElementById("app");
+  const days = daysSinceStart();
+  const currentPhase = PHASES[state.currentPhase];
+  const cpProgress = phaseProgress(state.currentPhase);
+
+  app.innerHTML = `
+    <header class="masthead">
+      <div>
+        <h1 class="masthead-title">Field log — n8n practice</h1>
+        <p class="masthead-sub">Eighteen months, five phases, one line at a time.</p>
+      </div>
+      <div class="masthead-meta">
+        <div class="meta-block">
+          <span class="meta-label">Day</span>
+          <span class="meta-value">${days.toString().padStart(3, "0")}</span>
+        </div>
+        <div class="meta-block">
+          <span class="meta-label">Phase</span>
+          <span class="meta-value accent">${state.currentPhase + 1} / ${PHASES.length}</span>
+        </div>
+        <div class="meta-block">
+          <span class="meta-label">Status</span>
+          <span class="meta-value" id="save-indicator">Saved</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="journey" id="journey">${renderJourney()}</aside>
+      <div class="content">
+
+        <section>
+          <div class="section-head">
+            <div>
+              <div class="section-eyebrow">Positioning</div>
+              <div class="section-title">Who you serve and what you build</div>
+            </div>
+          </div>
+          <div class="positioning">
+            <div class="positioning-field">
+              <label for="pos-who">Who</label>
+              <input id="pos-who" type="text" value="${escapeHtml(state.positioning.who)}"
+                placeholder="Marketing agencies, MENA service SMBs" oninput="updatePositioning('who', this.value)">
+            </div>
+            <div class="positioning-field">
+              <label for="pos-what">What you build</label>
+              <input id="pos-what" type="text" value="${escapeHtml(state.positioning.what)}"
+                placeholder="n8n workflows, WhatsApp AI agents, ops systems" oninput="updatePositioning('what', this.value)">
+            </div>
+            <div class="positioning-field">
+              <label for="pos-outcome">Outcome you deliver</label>
+              <input id="pos-outcome" type="text" value="${escapeHtml(state.positioning.outcome)}"
+                placeholder="Cut 10 hours of manual work per week" oninput="updatePositioning('outcome', this.value)">
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-head">
+            <div>
+              <div class="section-eyebrow">Phase ${state.currentPhase + 1} · ${currentPhase.duration}</div>
+              <div class="section-title">${currentPhase.name}</div>
+            </div>
+            <div class="section-meta">${cpProgress.done} / ${cpProgress.total} tasks · ${cpProgress.percent}%</div>
+          </div>
+          <p class="phase-summary">${currentPhase.summary}</p>
+          <div class="task-list">
+            ${currentPhase.tasks.map(t => renderTask(t)).join("")}
+          </div>
+          ${renderGate(currentPhase)}
+          ${state.currentPhase === 5 ? renderEndgame() : ""}
+        </section>
+
+        <section>
+          <div class="section-head">
+            <div>
+              <div class="section-eyebrow">Instruments</div>
+              <div class="section-title">Metrics summary</div>
+            </div>
+          </div>
+          ${renderMetrics()}
+        </section>
+
+        <section>
+          <div class="section-head">
+            <div>
+              <div class="section-eyebrow">Weekly log</div>
+              <div class="section-title">Record what happened this week</div>
+            </div>
+          </div>
+          ${renderLogForm()}
+          ${renderLogList()}
+        </section>
+
+        <section>
+          <div class="section-head">
+            <div>
+              <div class="section-eyebrow">Field notes</div>
+              <div class="section-title">Notes, ideas, observations</div>
+            </div>
+          </div>
+          <textarea class="notes-textarea" id="notes-area"
+            placeholder="What did you learn this week? What patterns are showing up in your conversations? What needs adjusting?"
+            oninput="updateNotes(this.value)">${escapeHtml(state.notes)}</textarea>
+        </section>
+
+        <div class="footer-note">
+          Started ${formatDate(state.startDate)} · ${totalTasksDone()} of ${totalTasks()} tasks complete across all phases.
+          Your work saves automatically as you go.
+          <br>
+          <button class="reset-link" onclick="confirmReset()">Reset everything</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderJourney() {
+  return `
+    <div class="journey-header">
+      <span class="journey-title">Route</span>
+      <span class="journey-progress">${totalTasksDone()} / ${totalTasks()}</span>
+    </div>
+    <div class="strata">
+      ${PHASES.map((phase, i) => {
+        const prog = phaseProgress(i);
+        const isCurrent = state.currentPhase === i;
+        const isComplete = phaseComplete(i);
+        const isUpcoming = !isCurrent && !isComplete && i > state.currentPhase;
+        const classes = ["stratum"];
+        if (isCurrent) classes.push("current");
+        if (isComplete) classes.push("complete");
+        if (isUpcoming) classes.push("upcoming");
+        return `
+          <button class="${classes.join(" ")}" onclick="setPhase(${i})">
+            <div class="stratum-index">${String(i + 1).padStart(2, "0")}</div>
+            <div class="stratum-body">
+              <div class="stratum-name">${phase.name}</div>
+              <div class="stratum-meta">
+                <span class="stratum-duration">${phase.duration}</span>
+                <span class="stratum-count">${prog.done}/${prog.total}</span>
+              </div>
+              <div class="stratum-fill">
+                <div class="stratum-fill-bar" style="width: ${prog.percent}%"></div>
+              </div>
+            </div>
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderTask(task) {
+  const done = !!state.tasks[task.id];
+  return `
+    <div class="task ${done ? "done" : ""}" onclick="toggleTask('${task.id}')">
+      <div class="task-check">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M1.5 5L4 7.5L8.5 2.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="task-text">${escapeHtml(task.text)}</div>
+      <div class="task-tag">${task.tag}</div>
+    </div>
+  `;
+}
+
+function renderGate(phase) {
+  const passed = phaseComplete(state.currentPhase);
+  return `
+    <div class="gate ${passed ? "passed" : ""}">
+      <div class="gate-label">${passed ? "Gate passed" : "Gate criteria"}</div>
+      <div class="gate-title">${phase.gate.title}</div>
+      <div class="gate-criteria">
+        ${phase.gate.criteria.map((c, i) => `
+          <div class="gate-item ${passed ? "hit" : ""}">
+            <span class="gate-item-marker">${passed ? "✓" : String(i + 1).padStart(2, "0")}</span>
+            <span>${escapeHtml(c)}</span>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderEndgame() {
+  return `
+    <div style="margin-top: 32px;">
+      <div style="font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 12px;">Path options</div>
+      <div class="endgame">
+        ${ENDGAMES.map(e => `
+          <div class="endgame-card">
+            <div class="endgame-name">${e.name}</div>
+            <div class="endgame-ceiling">${e.ceiling}</div>
+            <div class="endgame-desc">${e.desc}</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderMetrics() {
+  const m = metrics();
+  return `
+    <div class="metrics-grid">
+      <div class="metric">
+        <div class="metric-label">Total revenue</div>
+        <div class="metric-value success">${formatCurrency(m.totalRevenue)}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Projects done</div>
+        <div class="metric-value">${m.totalProjects}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">5-star reviews</div>
+        <div class="metric-value">${m.totalReviews}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Active retainers</div>
+        <div class="metric-value accent">${m.activeRetainers}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Proposals sent</div>
+        <div class="metric-value">${m.totalProposals}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Last 4 weeks</div>
+        <div class="metric-value">${formatCurrency(m.recentRevenue)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLogForm() {
+  const today = new Date().toISOString().split("T")[0];
+  return `
+    <div class="log-form" id="log-form">
+      <button class="log-form-toggle" onclick="toggleLogForm()">
+        <span class="log-form-toggle-label">Add this week's entry</span>
+        <span class="log-form-toggle-icon">+</span>
+      </button>
+      <div class="log-form-body">
+        <div class="log-fields">
+          <div class="field-group">
+            <label class="field-label" for="lf-week">Week starting</label>
+            <input class="field-input" type="date" id="lf-week" value="${today}">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="lf-proposals">Proposals sent</label>
+            <input class="field-input" type="number" id="lf-proposals" min="0" placeholder="0">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="lf-dms">Cold DMs</label>
+            <input class="field-input" type="number" id="lf-dms" min="0" placeholder="0">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="lf-conversations">New conversations</label>
+            <input class="field-input" type="number" id="lf-conversations" min="0" placeholder="0">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="lf-projects">Projects completed</label>
+            <input class="field-input" type="number" id="lf-projects" min="0" placeholder="0">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="lf-revenue">Revenue this week (USD)</label>
+            <input class="field-input" type="number" id="lf-revenue" min="0" step="0.01" placeholder="0">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="lf-reviews">5-star reviews</label>
+            <input class="field-input" type="number" id="lf-reviews" min="0" placeholder="0">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="lf-retainers">Active retainers</label>
+            <input class="field-input" type="number" id="lf-retainers" min="0" placeholder="0">
+          </div>
+        </div>
+        <div class="field-group full-width">
+          <label class="field-label" for="lf-notes">Notes on the week</label>
+          <textarea class="field-input" id="lf-notes" placeholder="What worked, what didn't, what to change next week"></textarea>
+        </div>
+        <div class="log-actions">
+          <button class="btn" onclick="toggleLogForm()">Cancel</button>
+          <button class="btn btn-primary" onclick="submitLog()">Save entry</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLogList() {
+  if (!state.logs || state.logs.length === 0) {
+    return `<div class="empty-state">No entries yet. Add your first weekly log above.</div>`;
+  }
+  return `
+    <div class="log-entries">
+      ${state.logs.map(l => renderLogEntry(l)).join("")}
+    </div>
+  `;
+}
+
+function renderLogEntry(log) {
+  const weekDate = new Date(log.weekStart);
+  const weekLabel = weekDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const yearLabel = weekDate.getFullYear();
+  return `
+    <div class="log-entry">
+      <div class="log-week">
+        <span class="log-week-strong">${weekLabel}</span>
+        <span>${yearLabel}</span>
+      </div>
+      <div>
+        <div class="log-numbers">
+          ${log.proposals ? `<div class="log-num-item"><span class="log-num-value">${log.proposals}</span><span class="log-num-label">props</span></div>` : ""}
+          ${log.dms ? `<div class="log-num-item"><span class="log-num-value">${log.dms}</span><span class="log-num-label">DMs</span></div>` : ""}
+          ${log.conversations ? `<div class="log-num-item"><span class="log-num-value">${log.conversations}</span><span class="log-num-label">convos</span></div>` : ""}
+          ${log.projects ? `<div class="log-num-item"><span class="log-num-value">${log.projects}</span><span class="log-num-label">projects</span></div>` : ""}
+          ${log.revenue ? `<div class="log-num-item"><span class="log-num-value">${formatCurrency(log.revenue)}</span><span class="log-num-label">rev</span></div>` : ""}
+          ${log.reviews ? `<div class="log-num-item"><span class="log-num-value">${log.reviews}</span><span class="log-num-label">reviews</span></div>` : ""}
+          ${log.retainers ? `<div class="log-num-item"><span class="log-num-value">${log.retainers}</span><span class="log-num-label">retainers</span></div>` : ""}
+        </div>
+        ${log.notes ? `<div class="log-note">${escapeHtml(log.notes)}</div>` : ""}
+      </div>
+      <button class="btn btn-danger" onclick="deleteLog(${log.id})">Delete</button>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return "";
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// ============================================================================
+// ACTIONS
+// ============================================================================
+
+window.setPhase = function(index) {
+  state.currentPhase = index;
+  save();
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+window.toggleTask = function(taskId) {
+  state.tasks[taskId] = !state.tasks[taskId];
+  save();
+  render();
+};
+
+window.toggleLogForm = function() {
+  const form = document.getElementById("log-form");
+  if (form) form.classList.toggle("open");
+};
+
+window.submitLog = function() {
+  const entry = {
+    id: Date.now(),
+    weekStart: document.getElementById("lf-week").value || new Date().toISOString().split("T")[0],
+    proposals: Number(document.getElementById("lf-proposals").value) || 0,
+    dms: Number(document.getElementById("lf-dms").value) || 0,
+    conversations: Number(document.getElementById("lf-conversations").value) || 0,
+    projects: Number(document.getElementById("lf-projects").value) || 0,
+    revenue: Number(document.getElementById("lf-revenue").value) || 0,
+    reviews: Number(document.getElementById("lf-reviews").value) || 0,
+    retainers: Number(document.getElementById("lf-retainers").value) || 0,
+    notes: document.getElementById("lf-notes").value || ""
+  };
+  state.logs.unshift(entry);
+  save();
+  render();
+};
+
+window.deleteLog = function(id) {
+  if (!confirm("Delete this entry?")) return;
+  state.logs = state.logs.filter(l => l.id !== id);
+  save();
+  render();
+};
+
+let notesDebounce = null;
+window.updateNotes = function(value) {
+  state.notes = value;
+  clearTimeout(notesDebounce);
+  notesDebounce = setTimeout(save, 500);
+};
+
+let posDebounce = null;
+window.updatePositioning = function(field, value) {
+  state.positioning[field] = value;
+  clearTimeout(posDebounce);
+  posDebounce = setTimeout(save, 500);
+};
+
+window.confirmReset = async function() {
+  if (!confirm("Reset all progress? This clears every checkbox, log entry, and note. It cannot be undone.")) return;
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  state.startDate = new Date().toISOString().split("T")[0];
+  await persist();
+  render();
+};
+
+// ============================================================================
+// INIT
+// ============================================================================
+
+(async function init() {
+  await loadState();
+  render();
+})();
+
+</script>
+</body>
+</html>
