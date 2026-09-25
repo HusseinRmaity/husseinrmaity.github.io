@@ -612,6 +612,50 @@
           </div>
         </article>
 
+        <!-- CASE 2 -->
+        <article class="case">
+          <div class="case-number">02</div>
+          <div class="case-body">
+            <div class="case-tag">Shopify &middot; n8n &middot; WhatsApp &middot; Claude</div>
+            <h3 class="case-title">WhatsApp abandoned-cart recovery for MENA e-commerce</h3>
+            <dl class="case-grid">
+              <dt>Problem</dt>
+              <dd>
+                Shopify's native cart-recovery email gets ignored in MENA: email open rates are
+                low, and Gulf and Levant shoppers live on WhatsApp, not their inbox. A checkout
+                abandoned at 11pm on a Thursday, the Gulf weekend, can sit untouched until
+                someone checks the abandoned-checkouts report. By then, the customer may have
+                bought elsewhere or forgotten the cart entirely.
+              </dd>
+              <dt>Solution</dt>
+              <dd>
+                When a Shopify checkout is abandoned, a webhook picks it up after a configurable
+                delay. Claude personalizes a WhatsApp recovery message in Arabic or English, then
+                Twilio sends it. Recovery status is tracked in Supabase; if an order is completed
+                before the message goes out, the send stops. No manual list-pulling and no
+                email-only fallback.
+              </dd>
+              <dt>Stack</dt>
+              <dd class="mono">n8n &middot; Shopify Admin API &middot; Twilio WhatsApp &middot; Claude/Anthropic &middot; Supabase</dd>
+              <dt>Result</dt>
+              <dd>
+                Self-initiated build, tested end to end on a Shopify dev store: checkout
+                abandonment to WhatsApp message sent, with the send stopping cleanly on order
+                completion. Built to the same 8-point production standard as Case 1: external
+                calls have explicit timeouts, retries and failure-path handling; recovery sends
+                are idempotent against duplicate webhook triggers; and success and failure events
+                are logged for visibility rather than failing silently.
+              </dd>
+            </dl>
+          </div>
+          <div class="case-links">
+              <a href="https://youtu.be/9WNA29ERcqQ" class="case-link" target="_blank" rel="noopener">Watch the walkthrough &rarr;</a>
+              <a href="https://youtu.be/_iugkREnfso" class="case-link" target="_blank" rel="noopener">العرض بالعربي &rarr;</a>
+              <a href="https://github.com/HusseinRmaity/whatsapp-cart-recovery-mena" class="case-link" target="_blank" rel="noopener">GitHub repo &rarr;</a>
+            </div>
+          </div>
+        </article>
+
       </div>
     </div>
   </section>
