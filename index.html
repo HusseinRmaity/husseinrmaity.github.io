@@ -621,19 +621,11 @@
             <dl class="case-grid">
               <dt>Problem</dt>
               <dd>
-                Shopify's native cart-recovery email gets ignored in MENA: email open rates are
-                low, and Gulf and Levant shoppers live on WhatsApp, not their inbox. A checkout
-                abandoned at 11pm on a Thursday, the Gulf weekend, can sit untouched until
-                someone checks the abandoned-checkouts report. By then, the customer may have
-                bought elsewhere or forgotten the cart entirely.
+                In MENA e-commerce, checkout abandonment is the default outcome, not the exception — the region's card-decline rates run high, COD buyers stall to confirm with a spouse or parent, and mobile checkout on a spotty connection times out mid-payment. Shopify's own recovery flow is a single English email sent hours later, landing in an inbox the shopper barely checks. A cart abandoned at 11pm on a Thursday — the start of the Gulf weekend — sits untouched until Sunday, by which point the customer has paid a competitor, changed their mind, or simply forgotten what was in the cart. Nobody is watching, and nothing meets the shopper where they actually are: WhatsApp.
               </dd>
               <dt>Solution</dt>
               <dd>
-                When a Shopify checkout is abandoned, a webhook picks it up after a configurable
-                delay. Claude personalizes a WhatsApp recovery message in Arabic or English, then
-                Twilio sends it. Recovery status is tracked in Supabase; if an order is completed
-                before the message goes out, the send stops. No manual list-pulling and no
-                email-only fallback.
+                A checkout is abandoned on a Shopify store, whether the shopper dropped off at payment, shipping, or a stalled COD confirmation. Within a configurable delay window the system picks it up via webhook, checks whether the order was completed in the meantime, and — if not — personalizes a WhatsApp recovery message in Arabic or English through Claude, referencing the actual items left behind. The message sends via Twilio, and recovery status is tracked in Supabase so no customer gets chased twice or chased after they've already checked out. No manual pulling of the abandoned-checkouts report, no email-only fallback.
               </dd>
               <dt>Stack</dt>
               <dd class="mono">n8n &middot; Shopify Admin API &middot; Twilio WhatsApp &middot; Claude/Anthropic &middot; Supabase</dd>
