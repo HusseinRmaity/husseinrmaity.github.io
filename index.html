@@ -631,12 +631,7 @@
               <dd class="mono">n8n &middot; Shopify Admin API &middot; Twilio WhatsApp &middot; Claude/Anthropic &middot; Supabase</dd>
               <dt>Result</dt>
               <dd>
-                Self-initiated build, tested end to end on a Shopify dev store: checkout
-                abandonment to WhatsApp message sent, with the send stopping cleanly on order
-                completion. Built to the same 8-point production standard as Case 1: external
-                calls have explicit timeouts, retries and failure-path handling; recovery sends
-                are idempotent against duplicate webhook triggers; and success and failure events
-                are logged for visibility rather than failing silently.
+                Working end to end on a Shopify dev store: an abandoned checkout triggers a WhatsApp message in the shopper's own language, and a completed order cancels the send before it goes out. The build treats messaging as a state machine, not a fire-and-forget email — every send is tied to a checkout's live status, so a shopper who checks out five minutes later never gets chased for a cart they already paid for. Retry and failure handling sit on every external call (Shopify, Twilio, Claude) rather than assuming the happy path, and duplicate webhook deliveries collapse to a single message instead of a shopper getting pinged twice.
               </dd>
             </dl>
             <div class="case-links">
